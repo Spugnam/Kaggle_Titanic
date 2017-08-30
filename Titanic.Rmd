@@ -1,0 +1,59 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2) # Data visualization
+#library(readr) # CSV file I/O, e.g. the read_csv function
+```
+
+```{r}
+passengers = read.csv("train.csv", stringsAsFactors = FALSE)
+passengers_test = read.csv("test.csv", stringsAsFactors = FALSE)
+View(passengers_test)
+attach(passengers)
+colnames(passengers)
+```
+
+```{r}
+lm.fit.exclude <- lm(Survived~Pclass+Age, data=passengers, na.action = na.exclude)
+summary(lm.fit.exclude)
+```
+
+
+```{r}
+# Design Matrix 
+m = model.matrix(Survived~Pclass+Age)
+head(m)
+# To manually assigned coefficients: coef(mod) %*% t(m) (where mod is a glm, coef vector of coeff)
+```
+
+```{r}
+ggplot(data = passengers, aes(x = Pclass, y = Survived)) + geom_point(position = "jitter")
+```
+
+```{r}
+lm.probs=predict(lm.fit.exclude,passengers_test,type="response")
+lm.pred=rep("0",dim(passengers_test)[1])
+lm.pred[lm.probs>.5]="1"
+```
+
+```{r}
+passengers_test['Survived'] <- lm.pred
+#View(passengers_test[,c("Survived",colnames(passengers_test)[1:11])])
+```
+
+```{r}
+write.csv(passengers_test[c("PassengerId","Survived")],"gender_submission.csv", row.names = FALSE)
+```
+
+
+```{r}
+
+```
+
+```{r}
+?poly
+```
+

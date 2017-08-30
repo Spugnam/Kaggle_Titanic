@@ -1,0 +1,85 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+getwd()
+```
+
+```{r}
+passengers = read.csv("train.csv", stringsAsFactors = FALSE)
+View(passengers)
+passengers_test = read.csv("test.csv", stringsAsFactors = FALSE)
+attach(passengers)
+```
+
+```{r}
+# Analysis of missing data
+
+summary(Age)
+length(Age)
+cat("\n")
+summary(Sex)
+length(Sex)
+```
+
+```{r}
+# 177 NA's in Age
+# Create LM models for predicting missing values in AGE and FARE
+	# age.mod <- lm(Age ~ Pclass + Sex + SibSp + Parch + Fare, data = passengers)
+	# fare.mod<- lm(Fare ~ Pclass + Sex + SibSp + Parch + Age, data = passengers)
+	# 
+	# # Replace missing values in AGE and FARE with prediction
+	# passengers$Age[is.na(passengers$Age)] <- predict(age.mod, passengers)[is.na(passengers$Age)]
+	# passengers_test$Age[is.na(passengers_test$Age)] <- predict(age.mod, passengers_test)[is.na(passengers_test$Age)]
+	# passengers_test$Fare[is.na(passengers_test$Fare)] <- predict(fare.mod, passengers_test)[is.na(passengers_test$Fare)] # only 1 missing
+```
+
+```{r}
+View(passengers)
+colnames(passengers)
+```
+
+```{r}
+glm.model <- glm(Survived ~Pclass + Sex + Age + SibSp + Parch + Fare, data=passengers, family=gaussian) # should Pclass/ Sex.. have been identified as factors?
+glm.pred <- predict.glm(glm.model,passengers_test)
+#glm.pred[is.na(glm.pred)] <- 0   # no undefined value
+glm.pred[glm.pred >= .5] <- 1
+glm.pred[glm.pred < .5] <- 0
+summary(glm.pred)
+```
+
+```{r}
+# with polynomial function
+glm.model2 <- glm(Survived ~poly(Age, SibSp, Parch, Fare, degree = 2) + factor(Sex) + factor(Pclass) + factor(Embarked), data=na.exclude(passengers))
+```
+
+```{r}
+glm.pred2 <- predict.glm(glm.model2,passengers_test)
+#glm.pred[is.na(glm.pred)] <- 0   # no undefined value
+glm.pred2[glm.pred2 >= .5] <- 1
+glm.pred2[glm.pred2 < .5] <- 0
+summary(glm.model2)
+```
+
+```{r}
+#Comparison
+# View(cbind(passengers_test,glm.pred2))
+# View(passengers_test[passengers_test$Survived!=glm.pred2,][,c(12,1:11)]) #look at 19 different results
+```
+
+```{r}
+passengers_test['Survived'] <- glm.pred2
+passengers_test2 <- passengers_test #for comparison in other files
+write.csv(passengers_test[c("PassengerId","Survived")],"gender_submission.csv", row.names = FALSE)
+```
+
+```{r}
+summary(passengers_test$Survived)
+```
+
+```{r}
+
+```
+

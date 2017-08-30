@@ -1,0 +1,68 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2) # Data visualization
+#library(readr) # CSV file I/O, e.g. the read_csv function
+```
+
+```{r}
+passengers = read.csv("train.csv", stringsAsFactors = FALSE)
+View(passengers)
+passengers_test = read.csv("test.csv", stringsAsFactors = FALSE)
+colnames(passengers)
+```
+```{r}
+# Analysis of missing data
+
+summary(Age)
+length(Age)
+cat("\n")
+summary(Sex)
+length(Sex)
+```
+
+```{r}
+head(passengers, 3)
+```
+
+```{r}
+# missing -> NA
+passengers$Cabin[passengers$Cabin==""] <- NA #Cabin is of class character
+head(passengers, 3)
+
+# Visualization of NA
+image(is.na(passengers), main = "Missing Values", xlab = "Observation", ylab = "Variable", 
+    xaxt = "n", yaxt = "n", bty = "n")
+axis(1, seq(0, 1, length.out = nrow(passengers)), 1:nrow(passengers), col = "white")
+axis(2, seq(1, ncol(passengers), 1), names(passengers), col = "white", las = 2)
+```
+
+```{r}
+passengers2
+```
+
+```{r}
+#lm.fit.exclude <- lm(Survived~polym(Pclass, Age, SibSp, Parch, Fare, degree = 1, raw=FALSE)+factor(Sex), data=na.exclude(passengers)) #creates missing values in predict
+lm.fit.exclude <- lm(Survived~Pclass+Age+SibSp+Parch+Fare+factor(Sex)+I(Age:Pclass), data=passengers[complete.cases(passengers),])
+summary(lm.fit.exclude)
+```
+
+```{r}
+lm.probs=predict(lm.fit.exclude,passengers_test,type="predict")
+lm.pred=rep("0",dim(passengers_test)[1])
+lm.pred[lm.probs>.5]="1"
+```
+
+```{r}
+passengers_test['Survived'] <- lm.pred
+#View(passengers_test[,c("Survived",colnames(passengers_test)[1:11])])
+```
+
+```{r}
+write.csv(passengers_test[c("PassengerId","Survived")],"gender_submission.csv", row.names = FALSE)
+```
+
+

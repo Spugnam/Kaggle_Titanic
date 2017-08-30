@@ -1,0 +1,60 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(ggplot2) # Data visualization
+#library(readr) # CSV file I/O, e.g. the read_csv function
+```
+
+```{r}
+passengers = read.csv("train.csv", stringsAsFactors = FALSE, na.strings = c("NA", ""))
+passengers_test = read.csv("test.csv", stringsAsFactors = FALSE, na.strings = c("NA", ""))
+attach(passengers)
+colnames(passengers)
+```
+
+```{r}
+# Create LM models for predicting missing values in AGE and FARE
+	age.mod <- lm(Age ~ Pclass + Sex + SibSp + Parch + Fare, data = passengers)
+	fare.mod<- lm(Fare ~ Pclass + Sex + SibSp + Parch + Age, data = passengers)
+
+	# Replace missing values in AGE and FARE with prediction
+	passengers$Age[is.na(passengers$Age)] <- predict(age.mod, passengers)[is.na(passengers$Age)]
+	passengers_test$Age[is.na(passengers_test$Age)] <- predict(age.mod, passengers_test)[is.na(passengers_test$Age)]
+	passengers_test$Fare[is.na(passengers_test$Fare)] <- predict(fare.mod, passengers_test)[is.na(passengers_test$Fare)] # only 1 missing
+```
+
+```{r}
+summary(passengers$Age)
+```
+
+```{r}
+# qda regression
+library(MASS)
+qda.fit <- qda(Survived~factor(Pclass)+Age+SibSp+Parch+Fare+factor(Sex), data=passengers, na.action = na.exclude)
+# note: factor(Embarked) throws a rank deficiency error
+qda.fit
+```
+
+
+
+```{r}
+qda.class=predict(qda.fit,passengers_test,type="predictive")$class
+qda.class
+```
+```{r}
+#Comparison with glm(poly)
+passengers_test['Survived'] <- qda.class
+passengers_test[passengers_test$Survived!=passengers_test2$Survived,]
+#View(passengers_test[passengers_test$Survived!=passengers_test2$Survived,][,c(12,1:11)])
+```
+
+```{r}
+write.csv(passengers_test[c("PassengerId","Survived")],"gender_submission.csv", row.names = FALSE)
+```
+
+```{r}
+summary(passengers_test$Survived)
+```
